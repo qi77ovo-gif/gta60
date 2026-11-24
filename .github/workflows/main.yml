@@ -7,8 +7,16 @@ jobs:
       - uses: actions/checkout@v4
       - name: Compile
         run: |
+          echo "=== 当前仓库文件 ==="
+          find . -maxdepth 4 -type f -not -path '*/.git*'
+          SRC=$(find . -maxdepth 4 -type f -not -path '*/.git*' -not -iname "*.md" -not -iname "*.yml" -not -iname "*.yaml" \( -iname "*.m" -o -iname "*.m *" -o -iname "*.m.txt" -o -iname "*unlock*" \) | head -n 1)
+          echo "=== 匹配到源码: [$SRC] ==="
+          if [ -z "$SRC" ]; then
+            echo "错误：当前仓库和分支里没有找到源码文件"
+            exit 1
+          fi
           SDK=$(xcrun --sdk iphoneos --show-sdk-path)
-          clang -dynamiclib -arch arm64 -isysroot "$SDK" -miphoneos-version-min=15.0 -fobjc-arc -Wno-deprecated-declarations -install_name @rpath/Unlock60FPS.dylib -framework Foundation -framework UIKit -framework QuartzCore -framework Metal -framework MetalKit Unlock60FPS.m -o Unlock60FPS.dylib
+          clang -dynamiclib -arch arm64 -isysroot "$SDK" -miphoneos-version-min=15.0 -fobjc-arc -Wno-deprecated-declarations -install_name @rpath/Unlock60FPS.dylib -framework Foundation -framework UIKit -framework QuartzCore -framework Metal -framework MetalKit -x objective-c "$SRC" -x none -o Unlock60FPS.dylib
           codesign -f -s - Unlock60FPS.dylib
       - uses: actions/upload-artifact@v4
         with:

@@ -1,0 +1,16 @@
+name: Build
+on: [push, workflow_dispatch]
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile
+        run: |
+          SDK=$(xcrun --sdk iphoneos --show-sdk-path)
+          clang -dynamiclib -arch arm64 -isysroot "$SDK" -miphoneos-version-min=15.0 -fobjc-arc -Wno-deprecated-declarations -install_name @rpath/Unlock60FPS.dylib -framework Foundation -framework UIKit -framework QuartzCore -framework Metal -framework MetalKit Unlock60FPS.m -o Unlock60FPS.dylib
+          codesign -f -s - Unlock60FPS.dylib
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Unlock60FPS-dylib
+          path: Unlock60FPS.dylib
